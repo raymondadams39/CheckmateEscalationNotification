@@ -26,14 +26,24 @@ export const createApp = ({
 	frontendPath: string;
 	openApiSpec: JsonObject;
 }) => {
-	const allowedOrigin = envSettings.clientHost;
+	const allowedOrigins = [
+		envSettings.clientHost,
+		envSettings.clientHost.replace("5173", "5174"),
+		envSettings.clientHost.replace("5174", "5173"),
+	];
 	const app = express();
 
 	app.use(generalApiLimiter);
 
 	app.use(
 		cors({
-			origin: allowedOrigin,
+			origin: (origin, callback) => {
+				if (!origin || allowedOrigins.includes(origin)) {
+					callback(null, true);
+				} else {
+					callback(new Error("Not allowed by CORS"));
+				}
+			},
 			methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
 			allowedHeaders: ["Content-Type", "Authorization", "Accept-Language"],
 			credentials: true,
